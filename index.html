@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>_pa.ne, конструктор</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@200;400;700;800&family=IBM+Plex+Mono:wght@400;600&family=Space+Mono:wght@400;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+/* Layout: big live preview on top, controls under it, then a grid of all name combinations rendered with the current settings. */
+:root {
+  --bg: #eceef1; --panel: #ffffff; --ink: #15171c; --muted: #636b7a; --line: #d6dae2;
+  --term: #0e1014; --term-ink: #eef0f3; --chip-on: #15171c; --chip-on-ink: #ffffff;
+  --cobalt: #6f86ff; --amber: #ffb547; --mint: #7be0b0; --rose: #ff7a8a; --paper: #f4f5f7; --paper-ink: #15171c;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --body: "Manrope", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0b0d10; --panel: #15181d; --ink: #eceef2; --muted: #8d94a4; --line: #272b34; --term: #050608; --chip-on: #eceef2; --chip-on-ink: #0b0d10; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #0b0d10; --panel: #15181d; --ink: #eceef2; --muted: #8d94a4; --line: #272b34; --term: #050608; --chip-on: #eceef2; --chip-on-ink: #0b0d10; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
+h1 { margin: 0; font-family: var(--mono); font-size: 1.35rem; }
+h2 { margin: 0; font-size: 1rem; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 62ch; line-height: 1.5; }
+
+.stage { --acc: var(--cobalt); background: var(--term); color: var(--term-ink); border-radius: 8px; padding: clamp(32px, 7vw, 72px) 16px; display: grid; place-items: center; gap: 18px; transition: background .25s, color .25s; }
+.stage.light { background: var(--paper); color: var(--paper-ink); border: 1px solid var(--line); }
+.stage .mark { font-size: clamp(2.6rem, 11vw, 6rem); min-height: 1.3em; }
+.stage .say { font-size: .85rem; opacity: .6; letter-spacing: .08em; }
+
+.mark { font-family: var(--f, var(--mono)); font-weight: var(--w, 400); letter-spacing: -.02em; white-space: nowrap; line-height: 1.2; }
+.p { color: var(--acc); }
+.blink { animation: blink 1.06s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.cur-block { display: inline-block; width: .6em; height: 1.02em; background: var(--acc); vertical-align: -.17em; }
+.cur-bar { display: inline-block; width: .09em; height: 1.02em; background: var(--acc); vertical-align: -.17em; margin: 0 .06em; }
+
+.controls { display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+.row { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; }
+.row > span { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 600 .85rem var(--body); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.chip:hover { border-color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-ink); border-color: var(--chip-on); }
+.chip:focus-visible, .combo:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+@media (max-width: 520px) { .row { grid-template-columns: 1fr; gap: 6px; } }
+
+.pick { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+.pick code { font-family: var(--mono); font-size: .85rem; color: var(--ink); overflow-wrap: anywhere; min-width: 0; flex: 1 1 260px; }
+.pick small { color: var(--muted); font-size: .8rem; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 14px; }
+.combo { --acc: var(--cobalt); all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 8px; min-width: 0; }
+.combo .tile { aspect-ratio: 4/3; max-width: 100%; border-radius: 6px; display: grid; place-items: center; background: var(--term); color: var(--term-ink); border: 2px solid transparent; overflow: hidden; }
+.combo.light .tile { background: var(--paper); color: var(--paper-ink); border-color: var(--line); }
+.combo .tile .mark { font-size: clamp(1.6rem, 4.6vw, 2.3rem); }
+.combo[aria-pressed="true"] .tile { border-color: var(--acc); }
+.combo .cap { font-size: .85rem; color: var(--muted); line-height: 1.4; }
+.combo .cap b { color: var(--ink); font-weight: 700; font-family: var(--mono); }
+.card { display: grid; gap: 8px; min-width: 0; position: relative; }
+.heart { position: absolute; top: 8px; right: 8px; font: 600 .8rem var(--body); color: var(--term-ink); background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.heart[aria-pressed="true"] { background: var(--rose); color: #fff; border-color: var(--rose); }
+.heart:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) { .blink { animation: none; } }
+</style>
+</head><body>
+
+<div class="wrap">
+  <header>
+    <h1>_pa.ne, конструктор</h1>
+    <p class="lead">Собери свой вариант знака: выбери написание, курсор, цвет, толщину и фон. Все варианты ниже сразу перерисовываются с твоими настройками. Нажми на вариант, чтобы увидеть его крупно. Кнопка ♥ на карточке отмечает понравившиеся, повторное нажатие снимает отметку.</p>
+  </header>
+
+  <div class="stage" id="stage">
+    <div class="mark" id="big" aria-live="polite"></div>
+    <div class="say" id="say"></div>
+  </div>
+
+  <div class="controls">
+    <div class="row"><span>Курсор</span><div class="chips" data-key="cursor">
+      <button class="chip" data-v="under">_ подчёркивание</button>
+      <button class="chip" data-v="block">▮ блок</button>
+      <button class="chip" data-v="bar">| черта</button>
+      <button class="chip" data-v="still">_ без мигания</button>
+    </div></div>
+    <div class="row"><span>Цвет знаков</span><div class="chips" data-key="color">
+      <button class="chip" data-v="cobalt"><i class="dot" style="--c:var(--cobalt)"></i>кобальт</button>
+      <button class="chip" data-v="amber"><i class="dot" style="--c:var(--amber)"></i>янтарь</button>
+      <button class="chip" data-v="mint"><i class="dot" style="--c:var(--mint)"></i>мята</button>
+      <button class="chip" data-v="rose"><i class="dot" style="--c:var(--rose)"></i>роза</button>
+      <button class="chip" data-v="mono"><i class="dot" style="--c:var(--muted)"></i>без цвета</button>
+    </div></div>
+    <div class="row"><span>Толщина</span><div class="chips" data-key="weight">
+      <button class="chip" data-v="200">тонкий</button>
+      <button class="chip" data-v="400">обычный</button>
+      <button class="chip" data-v="800">жирный</button>
+    </div></div>
+    <div class="row"><span>Шрифт</span><div class="chips" data-key="font">
+      <button class="chip" data-v="jb">JetBrains Mono</button>
+      <button class="chip" data-v="plex">IBM Plex Mono</button>
+      <button class="chip" data-v="space">Space Mono</button>
+    </div></div>
+    <div class="row"><span>Фон</span><div class="chips" data-key="bg">
+      <button class="chip" data-v="dark">тёмный</button>
+      <button class="chip" data-v="light">светлый</button>
+    </div></div>
+  </div>
+
+  <div class="pick">
+    <code id="summary"></code>
+    <span class="chips"><button class="chip" id="reset">Сбросить всё</button><button class="chip" id="copy">Скопировать выбор</button></span>
+  </div>
+
+  <section style="display:grid;gap:12px">
+    <h2>Написания</h2>
+    <div class="grid" id="grid"></div>
+  </section>
+</div>
+
+<script>
+const COMBOS = [
+  { t: "_pa.ne,",  say: "па · нэ",  note: "Исходный. Курсор, шаг, сомнение, продолжение." },
+  { t: "_pa.ne,_", say: "па · нэ",  note: "Курсор и в конце: фраза ждёт продолжения." },
+  { t: "pa.ne,",   say: "па · нэ",  note: "Без подчёркивания. Короче и спокойнее." },
+  { t: "_pa.ne",   say: "па · нэ",  note: "Без запятой. Чище, но теряется «продолжение»." },
+  { t: "_pane,",   say: "пане",     note: "Одно слово. Проще читать, точка ушла." },
+  { t: "_pane",    say: "пане",     note: "Самый простой: курсор и имя." },
+  { t: ".ne,",     say: "нэ",       note: "Короткий знак. Подходит для иконки." },
+  { t: "_ne,",     say: "нэ",       note: "Курсор вместо точки: «да или нет» ещё не набрано." },
+  { t: "pa.ne,_",  say: "па · нэ",  note: "Курсор только в конце: имя уже напечатано." },
+  { t: "_pa.",     say: "па",       note: "Половина знака. Как вторая строка к «ne,»." },
+  { t: ".si,",     say: "си",       note: "«Да» и «если». Светлая альтернатива." },
+  { t: ".ja,",     say: "я · йа",   note: "«Да» по-нидерландски и «я» по-русски." },
+];
+const FONTS = { jb: '"JetBrains Mono", ui-monospace, Menlo, monospace', plex: '"IBM Plex Mono", ui-monospace, Menlo, monospace', space: '"Space Mono", ui-monospace, Menlo, monospace' };
+const COLORS = { cobalt: "var(--cobalt)", amber: "var(--amber)", mint: "var(--mint)", rose: "var(--rose)", mono: "currentColor" };
+const LABELS = { under: "подчёркивание", block: "блок", bar: "черта", still: "без мигания", cobalt: "кобальт", amber: "янтарь", mint: "мята", rose: "роза", mono: "без цвета", 200: "тонкий", 400: "обычный", 800: "жирный", jb: "JetBrains Mono", plex: "IBM Plex Mono", space: "Space Mono", dark: "тёмный фон", light: "светлый фон" };
+
+let S = { cursor: "under", color: "amber", weight: "400", font: "jb", bg: "dark", combo: 0, favs: [] };
+try { const s = JSON.parse(localStorage.getItem("pane.pick.v1") || "null"); if (s) S = { ...S, ...s }; } catch (e) {}
+const save = () => { try { localStorage.setItem("pane.pick.v1", JSON.stringify(S)); } catch (e) {} };
+
+function render(text) {
+  // Cursor marks: every "_" is a cursor; ".", "," are accent punctuation.
+  return [...text].map(ch => {
+    if (ch === "_") {
+      if (S.cursor === "block") return '<span class="cur-block blink"></span>';
+      if (S.cursor === "bar") return '<span class="cur-bar blink"></span>';
+      return `<span class="p${S.cursor === "under" ? " blink" : ""}">_</span>`;
+    }
+    if (ch === "." || ch === ",") return `<span class="p">${ch}</span>`;
+    return ch;
+  }).join("");
+}
+
+function styleMark(el) {
+  el.style.setProperty("--f", FONTS[S.font]);
+  el.style.setProperty("--w", S.weight);
+}
+
+const grid = document.getElementById("grid");
+COMBOS.forEach((c, i) => {
+  const card = document.createElement("div"); card.className = "card";
+  const b = document.createElement("button");
+  b.className = "combo"; b.id = "combo-" + i; b.type = "button";
+  b.innerHTML = `<div class="tile"><div class="mark"></div></div><div class="cap"><b>${c.t}</b> · ${c.say}<br>${c.note}</div>`;
+  b.addEventListener("click", () => {
+    S.combo = i; save(); update();
+    if (window.innerWidth < 700) document.getElementById("stage").scrollIntoView({ behavior: "smooth" });
+  });
+  const h = document.createElement("button");
+  h.className = "heart"; h.id = "heart-" + i; h.type = "button"; h.textContent = "♥";
+  h.addEventListener("click", () => {
+    S.favs = S.favs.includes(i) ? S.favs.filter(x => x !== i) : [...S.favs, i];
+    save(); update();
+  });
+  card.append(b, h); grid.appendChild(card);
+});
+
+document.querySelectorAll(".chips").forEach(g => g.addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  S[g.dataset.key] = b.dataset.v; save(); update();
+}));
+
+function update() {
+  const acc = COLORS[S.color];
+  const stage = document.getElementById("stage");
+  stage.style.setProperty("--acc", acc);
+  stage.classList.toggle("light", S.bg === "light");
+  const big = document.getElementById("big");
+  big.innerHTML = render(COMBOS[S.combo].t); styleMark(big);
+  document.getElementById("say").textContent = "читается: " + COMBOS[S.combo].say;
+
+  document.querySelectorAll(".chips").forEach(g => g.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(S[g.dataset.key] === b.dataset.v))));
+
+  COMBOS.forEach((c, i) => {
+    const b = document.getElementById("combo-" + i);
+    b.style.setProperty("--acc", acc);
+    b.classList.toggle("light", S.bg === "light");
+    b.setAttribute("aria-pressed", String(S.combo === i));
+    const h = document.getElementById("heart-" + i);
+    h.setAttribute("aria-pressed", String(S.favs.includes(i)));
+    h.setAttribute("aria-label", S.favs.includes(i) ? "Снять отметку" : "Отметить");
+    const m = b.querySelector(".mark"); m.innerHTML = render(c.t); styleMark(m);
+  });
+
+  const favs = S.favs.length ? " · ♥ " + S.favs.map(i => COMBOS[i].t).join("  ") : "";
+  document.getElementById("summary").textContent =
+    `${COMBOS[S.combo].t} · курсор: ${LABELS[S.cursor]} · ${LABELS[S.color]} · ${LABELS[S.weight]} · ${LABELS[S.font]} · ${LABELS[S.bg]}${favs}`;
+}
+
+const DEFAULTS = { ...S, cursor: "under", color: "amber", weight: "400", font: "jb", bg: "dark", combo: 0, favs: [] };
+document.getElementById("reset").addEventListener("click", () => { S = { ...DEFAULTS, favs: [] }; save(); update(); });
+
+document.getElementById("copy").addEventListener("click", async e => {
+  const txt = document.getElementById("summary").textContent;
+  try { await navigator.clipboard.writeText(txt); e.target.textContent = "Скопировано"; }
+  catch (err) { const r = document.createRange(); r.selectNodeContents(document.getElementById("summary")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); e.target.textContent = "Выделено, скопируй вручную"; }
+  setTimeout(() => e.target.textContent = "Скопировать выбор", 1800);
+});
+
+update();
+</script>
+
+</body></html>
